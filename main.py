@@ -8,9 +8,11 @@ Created on Mon Oct  4 14:56:53 2021
 import snap
 import networkx as nx
 import os
+import utils
 
 filename = 'facebook_combined.txt'
 folder = 'data'
+
 
 def load_snap(filename):
     # load from a text file
@@ -23,19 +25,6 @@ def load_snap(filename):
     CntV = G.GetOutDegCnt()
     for p in CntV:
         print("degree %d: count %d" % (p.GetVal1(), p.GetVal2()))
-
-
-def load_graph(filename, directed_flag=False):
-    # load from a text file
-    if directed_flag:
-        G = nx.read_edgelist(filename, create_using=nx.DiGraph(), nodetype = int)
-    else:
-        G = nx.read_edgelist(filename, create_using=nx.Graph(), nodetype = int)
-    
-    # check if the data has been read properly or not.
-    print(nx.info(G))
- 
-    return G
 
 
 def get_cost(G, method):
@@ -60,7 +49,7 @@ def get_cost(G, method):
         
 
 if __name__ == '__main__':
-    G = load_graph(os.path.join(folder, filename))
+    G = utils.load_graph(os.path.join(folder, filename))
     #Adj_mat = nx.adjacency_matrix(G)
     
     print(get_cost(G, 'euclidean'))
