@@ -3,8 +3,6 @@
 @author: Gao Chuanchao
 """
 import random
-
-import math
 import networkx as nx
 
 
@@ -19,6 +17,7 @@ def load_graph(filename, directed_flag=False):
     print(nx.info(G))
 
     return G
+
 
 def strength(G, i, j):
     """
@@ -41,10 +40,10 @@ def get_euclidean_distance(G, i, j):
     """
     Calculate Euclidean distance between two node ids, follow clockwise direction
     """
-    if G.nodes[i]["identifier"] <= G.nodes[j]["identifier"]:
-        return abs(G.nodes[j]["identifier"] - G.nodes[i]["identifier"])
+    if G.peers[i]["identifier"] <= G.peers[j]["identifier"]:
+        return abs(G.peers[j]["identifier"] - G.peers[i]["identifier"])
     else:
-        return 1 + abs(G.nodes[j]["identifier"] - G.nodes[i]["identifier"])
+        return 1 + abs(G.peers[j]["identifier"] - G.peers[i]["identifier"])
 
 
 def get_hop_count(G, ol, i, j):
@@ -54,50 +53,119 @@ def get_hop_count(G, ol, i, j):
         ol: the symphony overlay
         i: the social network graph node
     """
-    return ol.get_hop_count(G.nodes[i]["identifier"], G.nodes[j]["identifier"])
+    return ol.get_hop_count(G.peers[i]["identifier"], G.peers[j]["identifier"])
 
 
 def link_overlay(G, ol):
     """
     link the social network graph with the symphony overlay
     """
-    for n in G.nodes:
+    for n in G.peers:
         ol.add_ids(n["identifier"])
 
 
-def node_selection(scheme):
+def node_j_selection(G, ol, m):
+    peer_m = ol.get_peer(G.peers[m]["identifier"])
+
+    return random.choice(peer_m.out_link + [peer_m.successor])
+
+
+def direct_selection(G, ol, i):
+    node_m = random.choice(nx.neighbors(G, i))
+
+    return node_j_selection(G, ol, node_m)
+
+
+def greedy_selection(G, ol, i):
+    node_m = None
+    strength_m = 0
+    for n in nx.neighbors(G, i):
+        strength_n = strength(G, i, n)
+        if strength_n > strength_m:
+            node_m = n
+            strength_m = strength_n
+
+    return node_j_selection(G, ol, node_m)
+
+
+def get_k_friends(G, i, k):
+    """
+    generate the top k strongest friends of node i
+    """
+    result = []
+    k_neighbors = {}
+
+    for n in nx.neighbors(G, i):
+        k_neighbors[n] = strength(G, i, n)
+    values = sorted(k_neighbors.values(), reverse=True)
+    if len(values) > k:
+        threshold = values[k - 1]
+        for k, v in k_neighbors.items():
+            if v >= threshold:
+                result.append(k)
+        return result
+    else:
+        return nx.neighbors(G, i)
+
+
+def smart_selection(G, ol, nei, i):
+    """
+    :param nei: the dictionary of top k friends of node, {node : [friend1, friend2, ...]}
+    """
+    node_m = random.choice(nei[i])
+
+    return node_j_selection(G, ol, node_m)
+
+
+def random_selection(G, ol, i):
+    node_m = random.choice(list(nx.nodes(G)))
+    if i == node_m:
+        node_m = random.choice(list(nx.nodes(G)))
+
+    return node_j_selection(G, ol, node_m)
+
+
+def node_selection(G, ol, nei, i, select_scheme):
     """
     choose node for exchange with the given scheme.
         scheme: direct, greedy, smart, random
     """
-    pass
+    if "direct" == select_scheme:
+        direct_selection(G, ol, i)
+    elif "greedy" == select_scheme:
+        greedy_selection(G, ol, i)
+    elif "smart" == select_scheme:
+        smart_selection(G, ol, nei, i)
+    elif "random" == select_scheme:
+        random_selection(G, ol, i)
 
-def get_cost(G, ol, i, j, scheme):
+
+def get_cost(G, ol, i, j, cost_scheme):
     """
     Calculate the cost of a node i in the social network graph G
     """
     cost = 0
     neighbors = nx.neighbors(G, i)
-    if "euclidean" == scheme:
+    if "euclidean" == cost_scheme:
         for n in neighbors:
             cost += strength(G, i, n) * get_euclidean_distance(G, j, n)
-    elif "hop" == scheme:
+    elif "hop" == cost_scheme:
         for n in neighbors:
             cost += strength(G, i, n) * get_hop_count(G, ol, j, n)
 
     return cost
 
 
-def cost_evaluation(G, ol, i, j, scheme):
+def cost_evaluation(G, ol, i, j, cost_scheme):
     """
     Calculate the cost of swapping.
     """
-    if "euclidean" == scheme:
+    if "euclidean" == cost_scheme:
         old_cost = get_cost(G, ol, i, i, "euclidean") + get_cost(G, ol, j, j, "euclidean")
         new_cost = get_cost(G, ol, i, j, "euclidean") + get_cost(G, ol, j, i, "euclidean")
         if old_cost >= new_cost:
             identifier_exchange(G, i, j)
-    elif "hop" == scheme:
+    elif "hop" == cost_scheme:
         old_cost = get_cost(G, ol, i, i, "hop") + get_cost(G, ol, j, j, "hop")
         new_cost = get_cost(G, ol, i, j, "hop") + get_cost(G, ol, j, i, "hop")
         if old_cost >= new_cost:
@@ -108,10 +176,7 @@ def identifier_exchange(G, i, j):
     """
     Change identifier of node i and node j if the cost is smaller after changing ids
     """
-    id_i = G.nodes[i]["identifier"]
-    id_j = G.nodes[j]["identifier"]
-    G.nodes[i]["identifier"] = id_j
-    G.nodes[j]["identifier"] = id_i
-
-
-
+    id_i = G.peers[i]["identifier"]
+    id_j = G.peers[j]["identifier"]
+    G.peers[i]["identifier"] = id_j
+    G.peers[j]["identifier"] = id_i

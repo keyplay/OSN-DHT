@@ -6,12 +6,12 @@ import random
 import math
 
 
-class Node:
+class Peer:
     """
-    This class defines the node manager of the Symphony DHT overlay.
-    Each node manages the identifier between its predecessor and itself.
-    Each node contains:
-        node value
+    This class defines the peer manager of the Symphony DHT overlay.
+    Each peer manages the identifier between its predecessor and itself.
+    Each peer contains:
+        peer value
         predecessor
         successor
         the identifier it manages
@@ -28,10 +28,10 @@ class Node:
     def add_id(self, identifier):
         self.ids.append(identifier)
 
-    def add_out_link(self, node):
-        if len(node.in_link) < self.k:
-            self.out_link.append(node)
-            node.in_link.append(self)
+    def add_out_link(self, peer):
+        if len(peer.in_link) < self.k:
+            self.out_link.append(peer)
+            peer.in_link.append(self)
 
 
 class Overlay:
@@ -44,44 +44,53 @@ class Overlay:
         """
         self.N = N
         self.k = k
-        self.nodes = dict()
+        self.peers = dict()
         for i in range(0, N):
-            self.nodes[i] = Node(i, k)
+            self.peers[i] = Peer(i, k)
 
         # ========== add short link =============
         # handle first node and last node
-        node = self.nodes[0]
-        node.predecessor = self.nodes[N-1]
-        node.successor = self.nodes[1]
+        peer = self.peers[0]
+        peer.predecessor = self.peers[N - 1]
+        peer.successor = self.peers[1]
 
-        node = self.nodes[N-1]
-        node.predecessor = self.nodes[N-2]
-        node.successor = self.nodes[0]
+        peer = self.peers[N - 1]
+        peer.predecessor = self.peers[N - 2]
+        peer.successor = self.peers[0]
 
         # handle intermediate nodes
         for i in range(1, N-1):
-            node = self.nodes[i]
-            node.predecessor = self.nodes[i-1]
-            node.successor = self.nodes[i+1]
+            peer = self.peers[i]
+            peer.predecessor = self.peers[i - 1]
+            peer.successor = self.peers[i + 1]
 
         # ========== add long link =============
         for i in range(N):
-            while len(self.nodes[i].out_link) < k:
+            while len(self.peers[i].out_link) < k:
                 x = math.ceil(math.exp(math.log(N) * (random.random() - 1)) * N)
                 if x > (N - 1):
                     x = 0
                 if x == i:
                     continue
-                self.nodes[i].add_out_link(self.nodes[x])
+                self.peers[i].add_out_link(self.peers[x])
 
     def add_ids(self, identifier):
         """
         add identifier of social network nodes to the overlay
         """
-        node_id = math.ceil(identifier * self.N)
-        if node_id > (self.N - 1):
-            node_id = 0
-        self.nodes[node_id].add_id(identifier)
+        peer_id = math.ceil(identifier * self.N)
+        if peer_id > (self.N - 1):
+            peer_id = 0
+        self.peers[peer_id].add_id(identifier)
+
+    def get_peer(self, identifier):
+        """
+        get the peer for given identifier of social network node
+        """
+        peer_id = math.ceil(identifier * self.N)
+        if peer_id > (self.N - 1):
+            peer_id = 0
+        return self.peers[peer_id]
 
     def distance(self, a, b):
         """
@@ -92,14 +101,14 @@ class Overlay:
         else:
             return self.N + b - a
 
-    def find_finger(self, node, end_node):
+    def find_finger(self, peer, end_peer):
         """
         Find the next node that is closest to the destination
         """
-        current = node
-        out_nodes = node.out_link + [node.successor]
+        current = peer
+        out_nodes = peer.out_link + [peer.successor]
         for n in out_nodes:
-            if self.distance(n.v, end_node.v) < self.distance(current.v, end_node.v):
+            if self.distance(n.v, end_peer.v) < self.distance(current.v, end_peer.v):
                 current = n
         return current
 
@@ -107,15 +116,15 @@ class Overlay:
         """
         Get the hop count for id1 to find id2 in clockwise direction
         """
-        start_node = self.nodes[math.ceil(id1 * self.N)]
-        end_node = self.nodes[math.ceil(id2 * self.N)]
-        if start_node.v == end_node.v:
+        start_peer = self.peers[math.ceil(id1 * self.N)]
+        end_peer = self.peers[math.ceil(id2 * self.N)]
+        if start_peer.v == end_peer.v:
             return 0
 
-        next_node = self.find_finger(start_node, end_node)
+        next_node = self.find_finger(start_peer, end_peer)
         count = 1
-        while next_node.v != end_node.v:
-            next_node = self.find_finger(next_node, end_node)
+        while next_node.v != end_peer.v:
+            next_node = self.find_finger(next_node, end_peer)
             count += 1
 
         return count
