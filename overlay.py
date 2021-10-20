@@ -3,7 +3,6 @@
 @author: Gao Chuanchao
 """
 import random
-
 import math
 
 
@@ -74,6 +73,57 @@ class Overlay:
                 if x == i:
                     continue
                 self.nodes[i].add_out_link(self.nodes[x])
+
+    def add_ids(self, identifier):
+        """
+        add identifier of social network nodes to the overlay
+        """
+        node_id = math.ceil(identifier * self.N)
+        if node_id > (self.N - 1):
+            node_id = 0
+        self.nodes[node_id].add_id(identifier)
+
+    def distance(self, a, b):
+        """
+        Calculate the distance between peer a and peer b
+        """
+        if a <= b:
+            return b - a
+        else:
+            return self.N + b - a
+
+    def find_finger(self, node, end_node):
+        """
+        Find the next node that is closest to the destination
+        """
+        current = node
+        out_nodes = node.out_link + [node.successor]
+        for n in out_nodes:
+            if self.distance(n.v, end_node.v) < self.distance(current.v, end_node.v):
+                current = n
+        return current
+
+    def get_hop_count(self, id1, id2):
+        """
+        Get the hop count for id1 to find id2 in clockwise direction
+        """
+        start_node = self.nodes[math.ceil(id1 * self.N)]
+        end_node = self.nodes[math.ceil(id2 * self.N)]
+        if start_node.v == end_node.v:
+            return 0
+
+        next_node = self.find_finger(start_node, end_node)
+        count = 1
+        while next_node.v != end_node.v:
+            next_node = self.find_finger(next_node, end_node)
+            count += 1
+
+        return count
+
+
+
+
+
 
 
 

@@ -3,6 +3,8 @@
 @author: Gao Chuanchao
 """
 import random
+
+import math
 import networkx as nx
 
 
@@ -37,28 +39,79 @@ def assign_identifier(G):
 
 def get_euclidean_distance(G, i, j):
     """
-    Calculate Euclidean distance between two node ids.
+    Calculate Euclidean distance between two node ids, follow clockwise direction
     """
-    return abs(G.nodes[i]["identifier"] - G.nodes[j]["identifier"])
+    if G.nodes[i]["identifier"] <= G.nodes[j]["identifier"]:
+        return abs(G.nodes[j]["identifier"] - G.nodes[i]["identifier"])
+    else:
+        return 1 + abs(G.nodes[j]["identifier"] - G.nodes[i]["identifier"])
 
 
-def get_hop_count(G, i, j):
+def get_hop_count(G, ol, i, j):
     """
-    Calculate the lookup latency (hop count) between two nodes
+    Calculate the lookup latency (hop count) between two nodes, follow clockwise direction
+        G: social network graph
+        ol: the symphony overlay
+        i: the social network graph node
+    """
+    return ol.get_hop_count(G.nodes[i]["identifier"], G.nodes[j]["identifier"])
+
+
+def link_overlay(G, ol):
+    """
+    link the social network graph with the symphony overlay
+    """
+    for n in G.nodes:
+        ol.add_ids(n["identifier"])
+
+
+def node_selection(scheme):
+    """
+    choose node for exchange with the given scheme.
+        scheme: direct, greedy, smart, random
     """
     pass
 
-def get_symphony(G):
+def get_cost(G, ol, i, j, scheme):
     """
-    Generate the Symphony overlay based on the ids assigned to the nodes
+    Calculate the cost of a node i in the social network graph G
     """
-    DHT = nx.DiGraph()
-    nodes = sorted(nx.get_node_attributes(G, "identifier").values())
-    DHT.add_nodes_from(nodes)
-    # add short links
-    for i in range(len(nodes)-1):
-        DHT.add_edge(nodes[i], nodes[i+1])
-    DHT.add_edge(nodes[-1], nodes[0])
-    # add long links
+    cost = 0
+    neighbors = nx.neighbors(G, i)
+    if "euclidean" == scheme:
+        for n in neighbors:
+            cost += strength(G, i, n) * get_euclidean_distance(G, j, n)
+    elif "hop" == scheme:
+        for n in neighbors:
+            cost += strength(G, i, n) * get_hop_count(G, ol, j, n)
+
+    return cost
+
+
+def cost_evaluation(G, ol, i, j, scheme):
+    """
+    Calculate the cost of swapping.
+    """
+    if "euclidean" == scheme:
+        old_cost = get_cost(G, ol, i, i, "euclidean") + get_cost(G, ol, j, j, "euclidean")
+        new_cost = get_cost(G, ol, i, j, "euclidean") + get_cost(G, ol, j, i, "euclidean")
+        if old_cost >= new_cost:
+            identifier_exchange(G, i, j)
+    elif "hop" == scheme:
+        old_cost = get_cost(G, ol, i, i, "hop") + get_cost(G, ol, j, j, "hop")
+        new_cost = get_cost(G, ol, i, j, "hop") + get_cost(G, ol, j, i, "hop")
+        if old_cost >= new_cost:
+            identifier_exchange(G, i, j)
+
+
+def identifier_exchange(G, i, j):
+    """
+    Change identifier of node i and node j if the cost is smaller after changing ids
+    """
+    id_i = G.nodes[i]["identifier"]
+    id_j = G.nodes[j]["identifier"]
+    G.nodes[i]["identifier"] = id_j
+    G.nodes[j]["identifier"] = id_i
+
 
 
