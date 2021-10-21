@@ -29,7 +29,7 @@ class Peer:
         self.ids.append(identifier)
 
     def add_out_link(self, peer):
-        if len(peer.in_link) < self.k:
+        if len(peer.in_link) < peer.k:
             self.out_link.append(peer)
             peer.in_link.append(self)
 
@@ -48,6 +48,7 @@ class Overlay:
         for i in range(0, N):
             self.peers[i] = Peer(i, k)
 
+        print("create short link...")
         # ========== add short link =============
         # handle first node and last node
         peer = self.peers[0]
@@ -64,15 +65,18 @@ class Overlay:
             peer.predecessor = self.peers[i - 1]
             peer.successor = self.peers[i + 1]
 
+        print("create long link...")
         # ========== add long link =============
         for i in range(N):
-            while len(self.peers[i].out_link) < k:
-                x = math.ceil(math.exp(math.log(N) * (random.random() - 1)) * N)
+            # print("peer " + str(i) + " finished")
+            peer = self.peers[i]
+            while len(peer.out_link) < k:
+                x = math.ceil(math.exp(math.log(N) * (random.random() - 1)) * N) + i
                 if x > (N - 1):
-                    x = 0
+                    x = x - N
                 if x == i:
                     continue
-                self.peers[i].add_out_link(self.peers[x])
+                peer.add_out_link(self.peers[x])
 
     def add_ids(self, identifier):
         """

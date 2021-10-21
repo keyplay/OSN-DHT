@@ -52,10 +52,10 @@ def get_euclidean_distance(G, i, j):
     """
     Calculate Euclidean distance between two node ids, follow clockwise direction
     """
-    if G.peers[i]["identifier"] <= G.peers[j]["identifier"]:
-        return abs(G.peers[j]["identifier"] - G.peers[i]["identifier"])
+    if G.nodes[i]["identifier"] <= G.nodes[j]["identifier"]:
+        return abs(G.nodes[j]["identifier"] - G.nodes[i]["identifier"])
     else:
-        return 1 + abs(G.peers[j]["identifier"] - G.peers[i]["identifier"])
+        return 1 + abs(G.nodes[j]["identifier"] - G.nodes[i]["identifier"])
 
 
 def get_hop_count(G, ol, i, j):
@@ -65,25 +65,25 @@ def get_hop_count(G, ol, i, j):
         ol: the symphony overlay
         i: the social network graph node
     """
-    return ol.get_hop_count(G.peers[i]["identifier"], G.peers[j]["identifier"])
+    return ol.get_hop_count(G.nodes[i]["identifier"], G.nodes[j]["identifier"])
 
 
 def link_overlay(G, ol):
     """
     link the social network graph with the symphony overlay
     """
-    for n in G.peers:
-        ol.add_ids(n["identifier"])
+    for n in nx.nodes(G):
+        ol.add_ids(G.nodes[n]["identifier"])
 
 
 def node_j_selection(G, ol, m):
-    peer_m = ol.get_peer(G.peers[m]["identifier"])
+    peer_m = ol.get_peer(G.nodes[m]["identifier"])
 
     return random.choice(peer_m.out_link + [peer_m.successor])
 
 
 def direct_selection(G, ol, i):
-    node_m = random.choice(nx.neighbors(G, i))
+    node_m = random.choice(list(nx.neighbors(G, i)))
 
     return node_j_selection(G, ol, node_m)
 
@@ -107,7 +107,7 @@ def get_k_friends(G, i, k):
     result = []
     k_neighbors = {}
 
-    for n in nx.neighbors(G, i):
+    for n in nx.all_neighbors(G, i):
         k_neighbors[n] = strength(G, i, n)
     values = sorted(k_neighbors.values(), reverse=True)
     if len(values) > k:
@@ -157,7 +157,7 @@ def get_cost(G, ol, i, j, cost_scheme):
     Calculate the cost of a node i in the social network graph G
     """
     cost = 0
-    neighbors = nx.neighbors(G, i)
+    neighbors = list(nx.all_neighbors(G, i))
     if "euclidean" == cost_scheme:
         for n in neighbors:
             cost += strength(G, i, n) * get_euclidean_distance(G, j, n)
@@ -188,7 +188,7 @@ def identifier_exchange(G, i, j):
     """
     Change identifier of node i and node j if the cost is smaller after changing ids
     """
-    id_i = G.peers[i]["identifier"]
-    id_j = G.peers[j]["identifier"]
-    G.peers[i]["identifier"] = id_j
-    G.peers[j]["identifier"] = id_i
+    id_i = G.nodes[i]["identifier"]
+    id_j = G.nodes[j]["identifier"]
+    G.nodes[i]["identifier"] = id_j
+    G.nodes[j]["identifier"] = id_i
