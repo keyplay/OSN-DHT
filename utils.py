@@ -4,6 +4,7 @@
 """
 import random
 import networkx as nx
+import snap
 
 
 def load_graph(filename, directed_flag=False):
@@ -18,6 +19,17 @@ def load_graph(filename, directed_flag=False):
 
     return G
 
+def load_snap(filename):
+    # load from a text file
+    G = snap.LoadEdgeList(snap.TUNGraph, filename, 0, 1)  #snap.TNGraph: directed, snap.TUNGraph: undirect
+    print("Graph: Nodes %d, Edges %d" % (G.GetNodes(), G.GetEdges()))
+
+    for NI in G.Nodes():
+        print("node: %d, out-degree %d, in-degree %d" % ( NI.GetId(), NI.GetOutDeg(), NI.GetInDeg()))
+
+    CntV = G.GetOutDegCnt()
+    for p in CntV:
+        print("degree %d: count %d" % (p.GetVal1(), p.GetVal2()))
 
 def strength(G, i, j):
     """
@@ -131,13 +143,13 @@ def node_selection(G, ol, nei, i, select_scheme):
         scheme: direct, greedy, smart, random
     """
     if "direct" == select_scheme:
-        direct_selection(G, ol, i)
+        return direct_selection(G, ol, i)
     elif "greedy" == select_scheme:
-        greedy_selection(G, ol, i)
+        return greedy_selection(G, ol, i)
     elif "smart" == select_scheme:
-        smart_selection(G, ol, nei, i)
+        return smart_selection(G, ol, nei, i)
     elif "random" == select_scheme:
-        random_selection(G, ol, i)
+        return random_selection(G, ol, i)
 
 
 def get_cost(G, ol, i, j, cost_scheme):

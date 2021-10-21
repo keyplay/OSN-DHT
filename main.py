@@ -1,58 +1,42 @@
 # -*- coding: utf-8 -*-
 """
-Created on Mon Oct  4 14:56:53 2021
-
-@author: Hou Yubo
+@author: Chuanchao
 """
-
-import snap
+import math
 import networkx as nx
 import os
 import utils
+from overlay import Overlay
 
 filename = 'facebook_combined.txt'
 folder = 'data'
 
 
-def load_snap(filename):
-    # load from a text file
-    G = snap.LoadEdgeList(snap.TUNGraph, filename, 0, 1)  #snap.TNGraph: directed, snap.TUNGraph: undirect
-    print("Graph: Nodes %d, Edges %d" % (G.GetNodes(), G.GetEdges()))
-    
-    for NI in G.Nodes():
-        print("node: %d, out-degree %d, in-degree %d" % ( NI.GetId(), NI.GetOutDeg(), NI.GetInDeg()))
-    
-    CntV = G.GetOutDegCnt()
-    for p in CntV:
-        print("degree %d: count %d" % (p.GetVal1(), p.GetVal2()))
-
-
-def get_cost(G, method):
-    def get_distance(x1, x2, method):
-        if method == 'euclidean':
-            dist = abs(x1-x2)
-        else:
-            pass  # to do
-        
-        return dist
-    
-    cost = 0
-    for node in nx.nodes(G):
-        neighbors = list(nx.neighbors(G, node))
-        for neig_node in neighbors:
-            common_neighbors = sorted(nx.common_neighbors(G, node, neig_node))
-            strength = len(common_neighbors) / len(neighbors)
-            dist = get_distance(node, neig_node, method)
-            cost += dist * strength
-            
-    return cost
-        
-
 if __name__ == '__main__':
+    # load social network graph
     G = utils.load_graph(os.path.join(folder, filename))
-    #Adj_mat = nx.adjacency_matrix(G)
-    
-    print(get_cost(G, 'euclidean'))
+    N = nx.number_of_nodes(G)
+    K = math.log(N)
+    utils.assign_identifier(G)
+
+    # generate the top k strongest friends for each node for smart selection
+    nei = {}
+    for node in nx.nodes(G):
+        nei[node] = utils.get_k_friends(G, node, K)
+
+    # initialize symphony overlay and connect with social network
+    ol = Overlay(N, K)
+    utils.link_overlay(G, ol)
+
+    # =========== Refinement ===========
+    # node selection
+    for node in nx.nodes(G):
+        node_j = utils.node_selection(G, ol, nei, node, "direct")
+        utils.cost_evaluation(G, ol, node, node_j, "euclidean")
+
+
+
+
     
     
 
