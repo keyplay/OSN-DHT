@@ -73,19 +73,17 @@ def link_overlay(G, ol):
     link the social network graph with the symphony overlay
     """
     for n in nx.nodes(G):
-        ol.add_ids(G.nodes[n]["identifier"])
-
-
-def node_j_selection(G, ol, m):
-    peer_m = ol.get_peer(G.nodes[m]["identifier"])
-
-    return random.choice(peer_m.out_link + [peer_m.successor])
+        ol.add_ids(n, G.nodes[n]["identifier"])
 
 
 def direct_selection(G, ol, i):
     node_m = random.choice(list(nx.neighbors(G, i)))
+    peer_m = ol.get_peer(G.nodes[node_m]["identifier"])
+    options = []
+    for out in (peer_m.out_link + [peer_m.successor]):
+        options += out.ids
 
-    return node_j_selection(G, ol, node_m)
+    return options
 
 
 def greedy_selection(G, ol, i):
@@ -97,7 +95,12 @@ def greedy_selection(G, ol, i):
             node_m = n
             strength_m = strength_n
 
-    return node_j_selection(G, ol, node_m)
+    peer_m = ol.get_peer(G.nodes[node_m]["identifier"])
+    options = []
+    for out in (peer_m.out_link + [peer_m.successor]):
+        options += out.ids
+
+    return options
 
 
 def get_k_friends(G, i, k):
@@ -126,7 +129,12 @@ def smart_selection(G, ol, nei, i):
     """
     node_m = random.choice(nei[i])
 
-    return node_j_selection(G, ol, node_m)
+    peer_m = ol.get_peer(G.nodes[node_m]["identifier"])
+    options = []
+    for out in (peer_m.out_link + [peer_m.successor]):
+        options += out.ids
+
+    return options
 
 
 def random_selection(G, ol, i):
@@ -134,7 +142,12 @@ def random_selection(G, ol, i):
     if i == node_m:
         node_m = random.choice(list(nx.nodes(G)))
 
-    return node_j_selection(G, ol, node_m)
+    peer_m = ol.get_peer(G.nodes[node_m]["identifier"])
+    options = []
+    for out in (peer_m.out_link + [peer_m.successor]):
+        options += out.ids
+
+    return options
 
 
 def node_selection(G, ol, nei, i, select_scheme):
@@ -143,13 +156,25 @@ def node_selection(G, ol, nei, i, select_scheme):
         scheme: direct, greedy, smart, random
     """
     if "direct" == select_scheme:
-        return direct_selection(G, ol, i)
+        options = direct_selection(G, ol, i)
+        while not options:
+            options = direct_selection(G, ol, i)
+        return random.choice(options)
     elif "greedy" == select_scheme:
-        return greedy_selection(G, ol, i)
+        options = greedy_selection(G, ol, i)
+        while not options:
+            options = greedy_selection(G, ol, i)
+        return random.choice(options)
     elif "smart" == select_scheme:
-        return smart_selection(G, ol, nei, i)
+        options = smart_selection(G, ol, nei, i)
+        while not options:
+            options = smart_selection(G, ol, nei, i)
+        return random.choice(options)
     elif "random" == select_scheme:
-        return random_selection(G, ol, i)
+        options = random_selection(G, ol, i)
+        while not options:
+            options = random_selection(G, ol, i)
+        return random.choice(options)
 
 
 def get_cost(G, ol, i, j, cost_scheme):

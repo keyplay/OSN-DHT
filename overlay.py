@@ -25,8 +25,8 @@ class Peer:
         self.in_link = []
         self.ids = []
 
-    def add_id(self, identifier):
-        self.ids.append(identifier)
+    def add_node(self, node):
+        self.ids.append(node)
 
     def add_out_link(self, peer):
         if len(peer.in_link) < peer.k:
@@ -78,14 +78,14 @@ class Overlay:
                     continue
                 peer.add_out_link(self.peers[x])
 
-    def add_ids(self, identifier):
+    def add_ids(self, node, identifier):
         """
         add identifier of social network nodes to the overlay
         """
         peer_id = math.ceil(identifier * self.N)
         if peer_id > (self.N - 1):
             peer_id = 0
-        self.peers[peer_id].add_id(identifier)
+        self.peers[peer_id].add_node(node)
 
     def get_peer(self, identifier):
         """
