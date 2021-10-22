@@ -124,6 +124,10 @@ class Overlay:
         end_peer = self.peers[math.ceil(id2 * self.N)]
         if start_peer.v == end_peer.v:
             return 0
+        if start_peer.v == self.N:
+            start_peer = self.peers[0]
+        if end_peer.v == self.N:
+            end_peer = self.peers[0]
 
         next_node = self.find_finger(start_peer, end_peer)
         count = 1
