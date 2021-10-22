@@ -46,6 +46,9 @@ if __name__ == '__main__':
             if swap_nodes[node]:
                 continue
             node_j = utils.node_selection(G, ol, nei, node, "direct")
+            # if node j is already swapped, find another one
+            while swap_nodes[node_j]:
+                node_j = utils.node_selection(G, ol, nei, node, "direct")
             swapped = utils.cost_evaluation(G, ol, node, node_j, "euclidean")
             # if the two nodes has been swapped, change their status
             if swapped:
