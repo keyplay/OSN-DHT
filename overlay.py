@@ -120,15 +120,17 @@ class Overlay:
         """
         Get the hop count for id1 to find id2 in clockwise direction
         """
-        start_peer = self.peers[math.ceil(id1 * self.N)]
-        end_peer = self.peers[math.ceil(id2 * self.N)]
-        if start_peer.v == end_peer.v:
+        idx1 = math.ceil(id1 * self.N)
+        idx2 = math.ceil(id2 * self.N)
+        if idx1 == idx2:
             return 0
-        if start_peer.v == self.N:
-            start_peer = self.peers[0]
-        if end_peer.v == self.N:
-            end_peer = self.peers[0]
+        if idx1 == self.N:
+            idx1 = 0
+        if idx2 == self.N:
+            idx2 = 0
 
+        start_peer = self.peers[idx1]
+        end_peer = self.peers[idx2]
         next_node = self.find_finger(start_peer, end_peer)
         count = 1
         while next_node.v != end_peer.v:
