@@ -34,8 +34,24 @@ if __name__ == '__main__':
     # =========== Refinement ===========
     # node selection
     print("Node refinement...")
-    for node in nx.nodes(G):
-        node_j = utils.node_selection(G, ol, nei, node, "direct")
-        utils.cost_evaluation(G, ol, node, node_j, "euclidean")
+    T = 10
+    for t in range(T):
+        # initialize a dict to indicate whether a node has been swapped or not
+        swap_nodes = {}
+        for n in nx.nodes(G):
+            swap_nodes[n] = False
+
+        for node in nx.nodes(G):
+            # if the node has already been swapped in iteration-t, then skip it
+            if swap_nodes[node]:
+                continue
+            node_j = utils.node_selection(G, ol, nei, node, "direct")
+            swapped = utils.cost_evaluation(G, ol, node, node_j, "euclidean")
+            # if the two nodes has been swapped, change their status
+            if swapped:
+                swap_nodes[node] = True
+                swap_nodes[node_j] = True
+
+
 
 

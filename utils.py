@@ -202,11 +202,15 @@ def cost_evaluation(G, ol, i, j, cost_scheme):
         new_cost = get_cost(G, ol, i, j, "euclidean") + get_cost(G, ol, j, i, "euclidean")
         if old_cost >= new_cost:
             identifier_exchange(G, i, j)
+            return True
+        return False
     elif "hop" == cost_scheme:
         old_cost = get_cost(G, ol, i, i, "hop") + get_cost(G, ol, j, j, "hop")
         new_cost = get_cost(G, ol, i, j, "hop") + get_cost(G, ol, j, i, "hop")
         if old_cost >= new_cost:
             identifier_exchange(G, i, j)
+            return True
+        return False
 
 
 def identifier_exchange(G, i, j):
