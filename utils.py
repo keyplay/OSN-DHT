@@ -201,23 +201,32 @@ def cost_evaluation(G, ol, i, j, cost_scheme):
         old_cost = get_cost(G, ol, i, i, "euclidean") + get_cost(G, ol, j, j, "euclidean")
         new_cost = get_cost(G, ol, i, j, "euclidean") + get_cost(G, ol, j, i, "euclidean")
         if old_cost >= new_cost:
-            identifier_exchange(G, i, j)
+            identifier_exchange(G, ol, i, j)
             return True
         return False
     elif "hop" == cost_scheme:
         old_cost = get_cost(G, ol, i, i, "hop") + get_cost(G, ol, j, j, "hop")
         new_cost = get_cost(G, ol, i, j, "hop") + get_cost(G, ol, j, i, "hop")
         if old_cost >= new_cost:
-            identifier_exchange(G, i, j)
+            identifier_exchange(G, ol, i, j)
             return True
         return False
 
 
-def identifier_exchange(G, i, j):
+def identifier_exchange(G, ol, i, j):
     """
     Change identifier of node i and node j if the cost is smaller after changing ids
     """
+    # change id
     id_i = G.nodes[i]["identifier"]
     id_j = G.nodes[j]["identifier"]
     G.nodes[i]["identifier"] = id_j
     G.nodes[j]["identifier"] = id_i
+    # change node location in the overlay
+    peer_i = ol.get_peer(id_i)
+    peer_i.ids.remove(id_i)
+    peer_i.add_node(id_j)
+
+    peer_j = ol.get_peer(id_j)
+    peer_j.ids.remove(id_j)
+    peer_j.add_node(id_i)
