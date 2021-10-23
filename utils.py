@@ -52,10 +52,11 @@ def get_euclidean_distance(G, i, j):
     """
     Calculate Euclidean distance between two node ids, follow clockwise direction
     """
-    if G.nodes[i]["identifier"] <= G.nodes[j]["identifier"]:
-        return abs(G.nodes[j]["identifier"] - G.nodes[i]["identifier"])
-    else:
-        return 1 + abs(G.nodes[j]["identifier"] - G.nodes[i]["identifier"])
+    # if G.nodes[i]["identifier"] <= G.nodes[j]["identifier"]:
+    #     return abs(G.nodes[j]["identifier"] - G.nodes[i]["identifier"])
+    # else:
+    #     return 1 + abs(G.nodes[j]["identifier"] - G.nodes[i]["identifier"])
+    return abs(G.nodes[j]["identifier"] - G.nodes[i]["identifier"])
 
 
 def get_hop_count(G, ol, i, j):
@@ -224,9 +225,9 @@ def identifier_exchange(G, ol, i, j):
     G.nodes[j]["identifier"] = id_i
     # change node location in the overlay
     peer_i = ol.get_peer(id_i)
-    peer_i.ids.remove(id_i)
-    peer_i.add_node(id_j)
+    peer_i.ids.remove(i)
+    peer_i.add_node(j)
 
     peer_j = ol.get_peer(id_j)
-    peer_j.ids.remove(id_j)
-    peer_j.add_node(id_i)
+    peer_j.ids.remove(j)
+    peer_j.add_node(i)

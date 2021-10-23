@@ -45,7 +45,7 @@ class Overlay:
         self.N = N
         self.k = k
         self.peers = dict()
-        for i in range(0, N):
+        for i in range(N):
             self.peers[i] = Peer(i, k)
 
         print("create short link...")
