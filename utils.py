@@ -89,7 +89,7 @@ def direct_selection(G, ol, i):
 
 def greedy_selection(G, ol, i):
     node_m = None
-    strength_m = 0
+    strength_m = -1
     for n in nx.neighbors(G, i):
         strength_n = strength(G, i, n)
         if strength_n > strength_m:
@@ -121,7 +121,7 @@ def get_k_friends(G, i, k):
                 result.append(k)
         return result
     else:
-        return nx.neighbors(G, i)
+        return list(nx.neighbors(G, i))
 
 
 def smart_selection(G, ol, nei, i):
