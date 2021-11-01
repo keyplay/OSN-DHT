@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-@author: Chuanchao
+@author: Yubo, Chuanchao
 """
 import math
 import networkx as nx
